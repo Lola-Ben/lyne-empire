@@ -1,0 +1,24 @@
+
+
+.NavLink {
+    background: #935F4C;
+    color: #0A0A0A;
+    display: flex;
+    gap: 4;
+    width: 90%;
+    height: 40px;
+    padding: 8px 10px;
+    margin: 4px 10px;
+    border: 1px solid #5555;
+    border-radius: 4px;
+
+}
+
+.NavLink:first-child{
+    margin-top: 20px;
+}
+
+.NavLink:hover {
+    background: #0585b8;
+    color: #ffffff;
+}

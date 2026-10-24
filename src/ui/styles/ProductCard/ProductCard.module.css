@@ -1,0 +1,34 @@
+.CardOuter {
+    background: #DFE5F3;
+    color: #FFD8B8;
+    border: 1px solid #e0dddd;
+    border-radius: 18px;
+    width: 260px;
+    height: 345px;
+    padding: 15px 5px;
+    margin: 14px 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.CardImage{
+    width: 230px;
+    height: 230px;
+    border: 1px solid #ffff;
+    border-radius: 18px;
+    margin-top: 10px;
+}
+
+.CardContent {
+    background: #FFD8B8;
+    color: #ffffff;
+    padding: 4px;
+    border: 1px solid #ffffff;
+    border-radius: 8px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    height: 37%;
+
+}
+
+
