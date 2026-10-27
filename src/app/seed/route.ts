@@ -2,12 +2,24 @@ import postgres from "postgres";
 import { categories, products, users } from "../../lib/placeholder-data";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
+import { success } from "zod";
+import { fa } from "zod/locales";
 
 // Force Nextjs to by pass static compiler optimizations for this endpoint
 export const dynamic = 'force-dynamic';
 
+// 1. Grab the raw connection string injected by Supabase
+const rawConnectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
+if(!rawConnectionString){
+    throw new  Error("❌ Critical Error: Database connection string is missing from environment variables")
+}
+
+// 2. Clean the string: Remove any trailing ?sslmode=require query text that breaks the postgres.js parser
+const cleanConnectionString = rawConnectionString.split('?')[0];
+
 // Initialize lightweight client cleanly
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require", max: 1 });
+const sql = postgres(cleanConnectionString, { ssl: {rejectUnauthorized: false}, max: 1 });
 
 async function seedUsers() {
 
