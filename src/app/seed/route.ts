@@ -3,11 +3,13 @@ import { categories, products, users } from "../../lib/placeholder-data";
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 
+// Force Nextjs to by pass static compiler optimizations for this endpoint
+export const dynamic = 'force-dynamic';
+
 // Initialize lightweight client cleanly
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: "require", max: 1 });
 
 async function seedUsers() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS users (
@@ -35,7 +37,6 @@ async function seedUsers() {
 }
 
 async function seedCategories() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS categories (
@@ -65,7 +66,6 @@ async function seedCategories() {
 }
 
 async function seedProducts(categoryUuidMap: Record<string, string>) {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS products (
@@ -164,7 +164,6 @@ async function seedProducts(categoryUuidMap: Record<string, string>) {
 }
 
 async function seedOrders() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
 
   // FIX: Removed illegal trailing commas and commas before parentheses
   await sql`
