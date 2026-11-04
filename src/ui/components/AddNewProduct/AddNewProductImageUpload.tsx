@@ -5,15 +5,17 @@ import {
   CldUploadWidget,
   type CloudinaryUploadWidgetResults,
 } from "next-cloudinary";
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 
-type ProductImage = {
+export type ListingImage = {
   publicId: string;
   url: string;
+  color: string;
   isPrimary: boolean;
 };
 
 const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
 const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 const colorSuggestions = [
   "Black",
@@ -26,21 +28,25 @@ const colorSuggestions = [
   "Gray",
   "Green",
   "Jet Black",
+  "Natural Black",
   "Ombre",
   "Pink",
   "Purple",
   "Red",
+  "White",
 ];
+const maxImages = 8;
 
-export default function AddNewProductImageUpload() {
-  const [productImages, setProductImages] = useState<{
-    images: ProductImage[];
-    colors: string[];
-  }>({ images: [], colors: [] });
+type AddNewProductImageUploadProps = {
+  images: ListingImage[];
+  onImagesChange: Dispatch<SetStateAction<ListingImage[]>>;
+};
+
+export default function AddNewProductImageUpload({
+  images,
+  onImagesChange,
+}: AddNewProductImageUploadProps) {
   const [uploadError, setUploadError] = useState("");
-  const { images, colors } = productImages;
-
-  console.log(productImages);
 
   function addImage(result: CloudinaryUploadWidgetResults) {
     const info = result.info;
@@ -54,102 +60,108 @@ export default function AddNewProductImageUpload() {
       return;
     }
 
-    setProductImages((current) => {
-      if (current.images.some((image) => image.publicId === info.public_id)) {
-        return current;
+    if (images.length >= maxImages) {
+      setUploadError(`You can add up to ${maxImages} product images.`);
+      return;
+    }
+    onImagesChange((currentImages) => {
+      if (
+        currentImages.length >= maxImages ||
+        currentImages.some((image) => image.publicId === info.public_id)
+      ) {
+        return currentImages;
       }
 
-      return {
-        images: [
-          ...current.images,
-          {
-            publicId: info.public_id,
-            url: info.secure_url,
-            isPrimary: current.images.length === 0,
-          },
-        ],
-        colors: [...current.colors, "Brown"],
-      };
+      return [
+        ...currentImages,
+        {
+          publicId: info.public_id,
+          url: info.secure_url,
+          color: "",
+          isPrimary: currentImages.length === 0,
+        },
+      ];
     });
     setUploadError("");
   }
 
-  function updateColor(imageIndex: number, color: string) {
-    setProductImages((current) => ({
-      ...current,
-      colors: current.colors.map((currentColor, index) =>
-        index === imageIndex ? color : currentColor,
-      ),
-    }));
-  }
-
-  function setPrimaryImage(publicId: string) {
-    setProductImages((current) => ({
-      ...current,
-      images: current.images.map((image) => ({
-        ...image,
-        isPrimary: image.publicId === publicId,
-      })),
-    }));
+  function updateImage(publicId: string, updates: Partial<ListingImage>) {
+    onImagesChange((currentImages) =>
+      currentImages.map((image) => ({
+          ...image,
+          ...updates,
+          isPrimary:
+            updates.isPrimary === true
+              ? image.publicId === publicId
+              : image.publicId === publicId
+                ? (updates.isPrimary ?? image.isPrimary)
+                : image.isPrimary,
+        })),
+    );
   }
 
   function removeImage(publicId: string) {
-    setProductImages((current) => {
-      const removedIndex = current.images.findIndex(
-        (image) => image.publicId === publicId,
-      );
-      const images = current.images.filter(
+    onImagesChange((currentImages) => {
+      const remainingImages = currentImages.filter(
         (image) => image.publicId !== publicId,
       );
-
-      if (images.length > 0 && !images.some((image) => image.isPrimary)) {
-        images[0] = { ...images[0], isPrimary: true };
+      if (
+        remainingImages.length > 0 &&
+        !remainingImages.some((image) => image.isPrimary)
+      ) {
+        remainingImages[0] = { ...remainingImages[0], isPrimary: true };
       }
-
-      return {
-        images,
-        colors: current.colors.filter((_, index) => index !== removedIndex),
-      };
+      return remainingImages;
     });
   }
 
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend className="font-semibold text-[#934F4C]">Product Images</legend>
-      <input
-        type="hidden"
-        name="productImages"
-        value={JSON.stringify({ image: images, colors })}
-      />
+      <legend className="font-semibold text-[#935F4C]">
+        Product photos <span className="text-red-700">*</span>
+      </legend>
+      <p className="text-sm leading-relaxed text-gray-600">
+        Upload clear product cutouts on a transparent background when possible.
+        PNG and WebP transparency are preserved. The first marked photo is the
+        main listing image; each photo needs its matching color.
+      </p>
 
-      {cloudName && uploadPreset ? (
+      {cloudName && apiKey && uploadPreset ? (
         <CldUploadWidget
+          signatureEndpoint="/api/cloudinary-signature"
           options={{
             cloudName,
+            apiKey,
             uploadPreset,
+            folder: "lyne-empire/products",
             multiple: true,
-            maxFiles: 10,
+            maxFiles: maxImages,
+            maxImageFileSize: 10_000_000,
+            maxImageWidth: 6000,
+            maxImageHeight: 6000,
+            validateMaxWidthHeight: true,
             resourceType: "image",
             sources: ["local"],
             clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
           }}
           onSuccess={addImage}
-          onError={() => setUploadError("Upload failed. Please try again.")}
+          onError={() => setUploadError("Image upload failed. Please try again.")}
         >
           {({ open }) => (
             <button
               type="button"
               onClick={() => open()}
-              className="w-fit rounded-lg bg-[#935F4C] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#7A4E3E]"
+              disabled={images.length >= maxImages}
+              className="w-fit rounded-lg bg-[#935F4C] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#7A4E3E] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Upload images
+              {images.length >= maxImages ? "Photo limit reached" : "Upload photos"}
             </button>
           )}
         </CldUploadWidget>
       ) : (
-        <p className="text-sm text-[#6B625E]">
-          Set NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and
-          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET to enable uploads.
+        <p role="alert" className="text-sm text-red-700">
+          Set the Cloudinary cloud name, API key, API secret, and signed upload
+          preset to enable image uploads.
         </p>
       )}
 
@@ -167,57 +179,62 @@ export default function AddNewProductImageUpload() {
 
       {images.length > 0 && (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {images.map((image, imageIndex) => (
+          {images.map((image) => (
             <li
               key={image.publicId}
               className="flex gap-3 rounded-lg border border-[#EFECE6] bg-white p-3"
             >
-              <div className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-md bg-[#F7F4F0]">
+              <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-md border border-[#EFECE6] bg-[radial-gradient(ellipse_at_50%_38%,_#fff_0%,_#FAFAFA_55%,_#F7F4F0_100%)] sm:w-28">
                 <Image
                   src={image.url}
-                  alt="Uploaded product"
+                  alt={image.color ? `Product in ${image.color}` : "Product photo preview"}
                   fill
-                  unoptimized
-                  className="object-cover"
+                  sizes="112px"
+                  className="object-contain p-1"
                 />
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <label className="flex items-center gap-2 text-sm">
+                <label className="flex items-center gap-2 text-sm font-medium text-[#262524]">
                   <input
                     type="radio"
                     name="primaryProductImage"
                     checked={image.isPrimary}
-                    onChange={() => setPrimaryImage(image.publicId)}
+                    onChange={() => updateImage(image.publicId, { isPrimary: true })}
                     className="accent-[#935F4C]"
                   />
-                  Primary image
+                  Main photo
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
-                  <span>Product color</span>
+                  <span className="font-medium text-[#262524]">
+                    Color for this photo
+                  </span>
                   <input
                     type="text"
                     list="product-color-suggestions"
-                    value={colors[imageIndex] ?? "Brown"}
+                    value={image.color}
                     onChange={(event) =>
-                      updateColor(imageIndex, event.target.value)
+                      updateImage(image.publicId, { color: event.target.value })
                     }
                     aria-label="Product color for this image"
-                    placeholder="e.g. Black, Brown, Blonde"
-                    className="w-full rounded border border-[#EFECE6] bg-white px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#935F4C]"
+                    placeholder="e.g. Natural Black"
+                    maxLength={50}
+                    required
+                    className="w-full rounded border border-[#EFECE6] bg-[#FAFAFA] px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#935F4C]/20"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={() => removeImage(image.publicId)}
-                  className="w-fit text-sm text-[#7A4E3E] underline underline-offset-2"
+                  className="w-fit text-sm text-[#935F4C] underline underline-offset-2 hover:text-[#7A4E3E]"
                 >
-                  Remove image
+                  Remove photo
                 </button>
               </div>
             </li>
           ))}
         </ul>
       )}
+      <p className="text-xs text-gray-500">{images.length} of {maxImages} photos added</p>
     </fieldset>
   );
 }

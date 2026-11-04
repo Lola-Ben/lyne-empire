@@ -20,6 +20,18 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Checkout setup
+
+Set these server environment variables before using Monetbil checkout:
+
+- `MONETBIL_SERVICE_KEY` and `MONETBIL_SERVICE_SECRET` from your Monetbil service settings.
+- `NEXT_PUBLIC_APP_URL` as the canonical public base URL for this deployment (for example, `https://your-store.example`).
+- `PRODUCT_ADMIN_PHONE_NUMBERS` as a comma-separated list of authorized account phone numbers. This is required to initialize and manage vendor contacts.
+
+After signing in with an authorized account, initialize the vendor contacts table and its initial contacts by sending `POST /api/seed/vendor-contacts` or `POST /api/seedForVendor`. Active vendor contacts can be queried from `GET /api/vendor-contacts` and added by an authorized admin with `POST /api/vendor-contacts` using `{ "label": "Vendor", "phoneNumber": "+2376XXXXXXXX" }`.
+
+The checkout route stores order and item records before creating the Monetbil v2.1 hosted payment. Monetbil callbacks are signature-checked and verified through its payment API before an order is marked successful. WhatsApp checkout reads active contacts from the same vendor contacts table.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

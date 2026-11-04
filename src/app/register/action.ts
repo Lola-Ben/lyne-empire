@@ -1,7 +1,10 @@
 "use server";
 
 import { signIn } from "@/lib/auth";
+import { createUser, isUniqueConstraintError } from "@/lib/server/users";
+import { AuthError } from "next-auth";
 import { z } from "zod";
+import { getSafeReturnPath } from "@/lib/auth-redirect";
 
 const registerFormSchema = z.object({
   name: z
@@ -12,7 +15,7 @@ const registerFormSchema = z.object({
   phone_number: z
     .string()
     .trim()
-    .regex(/^(?:\+237)?6[5-9]\d{7}\$/, {
+    .regex(/^(?:\+237)?6[5-9]\d{7}$/, {
       message: "Please enter a valid Cameroonian phone number (MTN, Orange, or Nexttel).",
     }),
   email: z
@@ -57,29 +60,36 @@ export async function registerUser(prevState: FormState | null, formData: FormDa
   }
 
   const { name, phone_number, email, password } = validatedFields.data;
+  const callbackUrl = getSafeReturnPath(formData.get("callback_url"));
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const response = await fetch(`${appUrl}/api/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone_number, email, password }),
+    await createUser({
+      name,
+      phoneNumber: phone_number,
+      email: email || null,
+      password,
     });
-
-    const data = await response.json();
-
-    if (!data.success) {
-      return { globalError: data.error || "Failed to create account." };
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return { globalError: "This number is already registered to an account." };
     }
 
+    console.error("Account registration failed.", error);
+    return { globalError: "Unable to create your account right now. Please try again." };
+  }
+
+  try {
     await signIn("credentials", {
       phone_number,
       password,
-      redirectTo: "/",
+      redirectTo: callbackUrl,
     });
-
-    return { success: true };
-  } catch (error: any) {
-    return { globalError: "An unexpected network error occurred." };
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { globalError: "Your account was created, but automatic sign in failed. Please sign in." };
+    }
+    throw error;
   }
+
+  return { success: true };
 }

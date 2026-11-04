@@ -19,6 +19,7 @@ type ProductRow = {
 };
 
 type CategoryRow = {
+  slug: string;
   name: string;
 };
 
@@ -161,5 +162,19 @@ export async function getCategoryProducts(slug: string): Promise<{
   } catch (error) {
     console.error(`Failed to load category "${slug}".`, error);
     throw new Error("Unable to load category products.", { cause: error });
+  }
+}
+
+export async function getProductCategories(): Promise<
+  Array<{ slug: string; name: string }>
+> {
+  try {
+    const database = getDatabase();
+    return await database<CategoryRow[]>`
+      SELECT slug, name FROM categories ORDER BY parent_section, name
+    `;
+  } catch (error) {
+    console.error("Failed to load product categories.", error);
+    throw new Error("Unable to load product categories.", { cause: error });
   }
 }

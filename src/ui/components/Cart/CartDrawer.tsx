@@ -1,8 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ShoppingBagIcon, XMarkIcon, PlusIcon, MinusIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 import type { CartItem } from "@/lib/definition";
-import { vendorWhatsAppContacts } from "@/lib/vendorContacts";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -16,17 +16,6 @@ interface CartDrawerProps {
 export default function CartDrawer({isOpen, onClose, items, onUpdateQuantity, onRemoveItem}:CartDrawerProps) {
 
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const orderMessage = [
-        "Hello Lyns Human Hair, I would like to place this order:",
-        "",
-        ...items.map((item) =>
-            `- ${item.name} (${item.color}), quantity ${item.quantity}: ${(item.price * item.quantity).toLocaleString()} FCFA`,
-        ),
-        "",
-        `Total: ${subtotal.toLocaleString()} FCFA`,
-    ].join("\n");
-    const whatsappUrl = (number: string) =>
-        `https://wa.me/${number}?text=${encodeURIComponent(orderMessage)}`;
     if (!isOpen) return null;
 
     return (
@@ -117,27 +106,15 @@ export default function CartDrawer({isOpen, onClose, items, onUpdateQuantity, on
                                 <p>Subtotal</p>
                                 <p>{subtotal.toLocaleString()} FCFA</p>
                             </div>
-                            <p className="mb-4 mt-0.5 text-xs text-gray-400">Contact the vendor to confirm delivery and payment.</p>
+                            <p className="mb-4 mt-0.5 text-xs text-gray-400">Sign in or create an account to choose a checkout method.</p>
                             <div className="space-y-2">
-                                <a
-                                    href={whatsappUrl(vendorWhatsAppContacts[0].number)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                <Link
+                                    href="/checkout"
+                                    onClick={onClose}
                                     className="flex w-full items-center justify-center rounded-md border bg-[#935F4C] px-6 py-3.5 text-center text-sm font-semibold uppercase tracking-widest text-white shadow-sm transition-colors hover:bg-[#7A4E3E]"
                                 >
-                                    Proceed to Checkout on WhatsApp
-                                </a>
-                                <p className="text-center text-xs text-gray-500">
-                                    Primary vendor: {vendorWhatsAppContacts[0].number.replace("237", "+237 ")}
-                                </p>
-                                <a
-                                    href={whatsappUrl(vendorWhatsAppContacts[1].number)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="block w-full py-1 text-center text-xs font-medium text-[#935F4C] underline underline-offset-2 hover:text-[#7A4E3E]"
-                                >
-                                    Contact alternate vendor ({vendorWhatsAppContacts[1].number.replace("237", "+237 ")})
-                                </a>
+                                    Proceed to checkout
+                                </Link>
                                 <button onClick={onClose} className="w-full text-center text-xs font-semibold tracking-wider text-[#935F4C] hover:text-[#7A4E3E] transition-colors py-2">Continue Shopping</button>
                         </div>
                     </div>

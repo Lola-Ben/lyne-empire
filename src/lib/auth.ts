@@ -1,10 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import postgres from "postgres";
-import z from "zod";
-
-
+import { z } from "zod";
+import { getUserByPhoneNumber } from "@/lib/server/users";
 
 declare module "next-auth"{
     interface User {
@@ -19,27 +17,23 @@ declare module "@auth/core/jwt"{
     }
 }
 
-const sql = postgres(process.env.POSTGRES_URL!, {ssl: "require"})
-
-
 export const {handlers, signIn, signOut, auth} = NextAuth({providers:[
     Credentials({
         name: "Credentials",
         credentials: {
             phone_number: {label: "Phone Number", type: "text", placeholder:"+237xxxxxxxxx"},
-            password: {label: "Password", type: "text"}
+            password: {label: "Password", type: "password"}
         },
         async authorize(credentials) {
           const parsedCredentials =  z.object({
-            phone_number: z.string(),
+            phone_number: z.string().trim().min(1).max(30),
             password: z.string().min(6)
            }).safeParse(credentials)
 
            if(!parsedCredentials.success) return null;
 
            const {phone_number, password} = parsedCredentials.data;
-
-           const [user] = await sql`SELECT * FROM users WHERE phone_number = ${phone_number}`;
+           const user = await getUserByPhoneNumber(phone_number);
 
            if (!user) return null;
 
