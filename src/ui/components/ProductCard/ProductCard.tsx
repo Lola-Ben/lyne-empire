@@ -22,13 +22,17 @@ export default function ProductCard({ product }: ProductCardProps) {
         className="group flex flex-1 flex-col"
         aria-label={`View ${product.name}`}
       >
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#EFECE6] sm:aspect-square">
+        <div className="relative isolate aspect-[4/3] w-full overflow-hidden bg-[radial-gradient(ellipse_at_50%_38%,_#fff_0%,_#faf8f5_48%,_#eee8df_100%)] sm:aspect-square">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-[22%] bottom-[12%] z-0 h-5 rounded-[50%] bg-[#5c4638]/10 blur-xl sm:h-7"
+          />
           <Image
             src={image.url}
             alt={`${product.name} in ${image.color}`}
             fill
             sizes="(max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
-            className="object-contain p-2 transition-transform duration-300 group-hover:scale-105 sm:p-4"
+            className="z-10 object-contain p-1 transition-transform duration-300 group-hover:scale-105 sm:p-2"
           />
         </div>
         <div className="flex flex-1 flex-col p-2.5 sm:p-4">
