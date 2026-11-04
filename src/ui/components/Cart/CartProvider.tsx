@@ -8,13 +8,13 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react";
-import { getProductById } from "@/lib/products";
+import type { Product } from "@/lib/products";
 import type { CartItem } from "@/lib/definition";
 
 type CartContextValue = {
   items: CartItem[];
   addItem: (
-    productId: string,
+    product: Product,
     quantity: number,
     size?: string,
     color?: string,
@@ -126,17 +126,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const addItem = useCallback((
-    productId: string,
+    product: Product,
     quantity: number,
     size?: string,
     color?: string,
   ) => {
-    const product = getProductById(productId);
-    if (!product) {
-      console.error(`Cannot add unknown product "${productId}" to the cart.`);
-      return false;
-    }
-
     const image =
       product.images.find((productImage) => productImage.color === color) ??
       product.images[0];

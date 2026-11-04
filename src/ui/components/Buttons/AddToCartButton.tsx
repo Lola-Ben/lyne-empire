@@ -3,16 +3,17 @@
 import { useState } from "react";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
 import { useCart } from "@/ui/components/Cart/CartProvider";
+import type { Product } from "@/lib/products";
 
 type AddToCartButtonProps = {
-  productId: string;
+  product: Product;
   quantity: number;
   size?: string;
   color?: string;
 };
 
 export default function AddToCartButton({
-  productId,
+  product,
   quantity,
   size,
   color,
@@ -21,7 +22,7 @@ export default function AddToCartButton({
   const [added, setAdded] = useState(false);
 
   function handleAddToCart() {
-    if (addItem(productId, quantity, size, color)) {
+    if (addItem(product, quantity, size, color)) {
       setAdded(true);
       window.setTimeout(() => setAdded(false), 1800);
     }

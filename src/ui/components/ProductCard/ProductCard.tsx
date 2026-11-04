@@ -92,7 +92,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       )}
       <div className="px-2.5 pb-2.5 sm:px-4 sm:pb-4">
         <AddToCartButton
-          productId={product.id}
+          product={product}
           quantity={1}
           size={selectedSize}
           color={image.color}
