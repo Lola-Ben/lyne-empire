@@ -82,7 +82,7 @@ export default function ProductOverviewCard({
 
         <div className="mt-auto pt-6">
           <AddToCartButton
-            productId={product.id}
+            product={product}
             quantity={1}
             size={selectedSize}
           />

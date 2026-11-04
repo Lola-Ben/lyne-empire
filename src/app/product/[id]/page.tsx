@@ -1,21 +1,26 @@
 import { notFound } from "next/navigation";
 import ProductCard from "@/ui/components/ProductCard/ProductCard";
 import ProductOverviewCard from "@/ui/components/ProductCard/ProductOverviewCard";
-import { getProductById, getRelatedProducts } from "@/lib/products";
+import {
+  getProductById,
+  getRelatedProducts,
+} from "@/lib/server/products";
+
+export const dynamic = "force-dynamic";
 
 type ProductPageProps = {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 };
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { slug } = await params;
-  const product = getProductById(slug);
+  const { id } = await params;
+  const product = await getProductById(id);
 
   if (!product) {
     notFound();
   }
 
-  const relatedProducts = getRelatedProducts(product);
+  const relatedProducts = await getRelatedProducts(product);
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-10 p-4 sm:p-8">
