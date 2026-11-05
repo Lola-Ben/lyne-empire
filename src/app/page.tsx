@@ -23,12 +23,11 @@ export default async function Home() {
       </div>
 
       <section>
-        {/* Clean Responsive Grid layout shifting columns seamlessly based on viewport size */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="flex flex-col gap-8">
           {Object.entries(sections).map(([sectionName, sectionProducts]) => (
-            <div key={sectionName}>
+            <div key={sectionName} className="min-w-0">
               <h3 className="text-lg font-semibold text-[#262524]">{sectionName}</h3>
-              <div className="grid grid-cols-1 gap-3 sm:gap-5">
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
                 {sectionProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}

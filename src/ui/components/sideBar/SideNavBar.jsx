@@ -12,7 +12,7 @@ export default function SideNavBar() {
   const isHomeActive = pathname === "/";
 
   return (
-    <aside className="hidden min-h-screen w-64 flex-col gap-4 border-r border-[#EFECE6] bg-[#F7F4F0] p-6 md:flex">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col gap-4 border-r border-[#EFECE6] bg-[#F7F4F0] p-6 md:flex">
       <div className="mb-4">
         <span className="text-xs font-bold tracking-widest text-[#935F4C] uppercase">Categories</span>
       </div>
@@ -24,7 +24,7 @@ export default function SideNavBar() {
           <span>Home</span>
         </Link>
       </div>
-      <div className="space-y-6 overflow-y-auto">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto">
         {navigationCategories.map((category => (
           <div key={category.id} className="flex flex-col">
             <h4 className="text-xs font-bold tracking-widest text-[#935F4C] uppercase mb-2 pl-3">{category.section}</h4>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {
   CldUploadWidget,
+  type CloudinaryUploadWidgetError,
   type CloudinaryUploadWidgetResults,
 } from "next-cloudinary";
 import { useState, type Dispatch, type SetStateAction } from "react";
@@ -50,13 +51,16 @@ export default function AddNewProductImageUpload({
 
   function addImage(result: CloudinaryUploadWidgetResults) {
     const info = result.info;
+    if (result.event !== "success") {
+      return;
+    }
     if (
-      result.event !== "success" ||
       typeof info !== "object" ||
       info === null ||
       typeof info.public_id !== "string" ||
       typeof info.secure_url !== "string"
     ) {
+      setUploadError("The upload completed without a usable image URL. Please try again.");
       return;
     }
 
@@ -83,6 +87,20 @@ export default function AddNewProductImageUpload({
       ];
     });
     setUploadError("");
+  }
+
+  function showUploadError(error: CloudinaryUploadWidgetError) {
+    if (typeof error === "object" && error !== null && error.statusText) {
+      setUploadError(`Image upload failed (${error.status}): ${error.statusText}`);
+      return;
+    }
+
+    if (typeof error === "string" && error.trim()) {
+      setUploadError(`Image upload failed: ${error}`);
+      return;
+    }
+
+    setUploadError("Image upload failed. Check your connection and upload settings, then try again.");
   }
 
   function updateImage(publicId: string, updates: Partial<ListingImage>) {
@@ -145,7 +163,7 @@ export default function AddNewProductImageUpload({
             clientAllowedFormats: ["jpg", "jpeg", "png", "webp"],
           }}
           onSuccess={addImage}
-          onError={() => setUploadError("Image upload failed. Please try again.")}
+          onError={showUploadError}
         >
           {({ open }) => (
             <button
