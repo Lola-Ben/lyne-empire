@@ -5,18 +5,35 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Product } from "@/lib/products";
 import AddToCartButton from "../Buttons/AddToCartButton";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 
 type ProductCardProps = {
   product: Product;
+  isAdmin?: boolean;
 };
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  isAdmin = false,
+}: ProductCardProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const image = product.images[selectedImageIndex] ?? product.images[0];
   const selectedSize = product.sizes[0] ?? "One size";
 
   return (
     <article className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-[#EFECE6] bg-white transition-shadow hover:shadow-sm sm:rounded-xl sm:hover:shadow-md">
+      {isAdmin && (
+        <div className="flex justify-end border-b border-[#EFECE6] px-2.5 py-1.5 sm:px-4">
+          <Link
+            href={`/product/${product.id}/edit`}
+            aria-label={`Edit ${product.name}`}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-[#754B3D] hover:bg-[#F7F4F0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#935F4C]"
+          >
+            <PencilSquareIcon aria-hidden="true" className="h-4 w-4" />
+            Edit
+          </Link>
+        </div>
+      )}
       <Link
         href={`/product/${product.id}`}
         className="group flex flex-1 flex-col"

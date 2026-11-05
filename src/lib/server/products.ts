@@ -23,6 +23,35 @@ type CategoryRow = {
   name: string;
 };
 
+export type EditableProduct = {
+  id: string;
+  name: string;
+  brand: string;
+  description: string;
+  basePrice: number;
+  categorySlug: string;
+  sizes: string[];
+  images: Array<{ publicId: string; url: string; color: string; isPrimary: boolean }>;
+  variants: Array<{ color: string; size: string | null; stock: number }>;
+};
+
+type EditableProductRow = {
+  id: string;
+  name: string;
+  brand: string | null;
+  description: string | null;
+  base_price: string | number;
+  image_urls: string[] | null;
+  available_colors: string[] | null;
+  category_slug: string;
+};
+
+type ProductVariantRow = {
+  color: string;
+  size: string | null;
+  stock: number;
+};
+
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -115,6 +144,67 @@ export async function getProductById(id: string): Promise<Product | null> {
   } catch (error) {
     console.error(`Failed to load product "${id}".`, error);
     throw new Error("Unable to load product.", { cause: error });
+  }
+}
+
+export async function getProductForEditing(
+  id: string,
+): Promise<EditableProduct | null> {
+  if (!uuidPattern.test(id)) return null;
+
+  try {
+    const database = getDatabase();
+    const [row] = await database<EditableProductRow[]>`
+      SELECT
+        p.id,
+        p.name,
+        p.brand,
+        p.description,
+        p.base_price,
+        p.image_urls,
+        p.available_colors,
+        c.slug AS category_slug
+      FROM products p
+      JOIN categories c ON p.category_id = c.id
+      WHERE p.id = ${id}
+      LIMIT 1
+    `;
+    if (!row) return null;
+
+    const variants = await database<ProductVariantRow[]>`
+      SELECT color, size, stock_qty AS stock
+      FROM product_variants
+      WHERE product_id = ${id}
+      ORDER BY color, size NULLS FIRST
+    `;
+    const imageUrls = row.image_urls ?? [];
+    const colors = row.available_colors ?? [];
+
+    return {
+      id: row.id,
+      name: row.name,
+      brand: row.brand ?? "Lyne Empire",
+      description: row.description ?? "",
+      basePrice: Number(row.base_price),
+      categorySlug: row.category_slug,
+      sizes: [
+        ...new Set(
+          variants
+            .map((variant) => variant.size)
+            .filter((size): size is string => size !== null),
+        ),
+      ],
+      images: imageUrls.map((url, index) => ({
+        publicId: `${row.id}-${index}`,
+        url,
+        color: colors[index] ?? "Default",
+        isPrimary: index === 0,
+      })),
+      variants,
+    };
+  } catch (error) {
+    console.error(`Failed to load product "${id}" for editing.`, error);
+    throw new Error("Unable to load product for editing.", { cause: error });
   }
 }
 
