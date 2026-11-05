@@ -13,6 +13,17 @@ type ProductCategory = {
 
 type AddNewProductProps = {
   categories: ProductCategory[];
+  initialProduct?: {
+    id: string;
+    name: string;
+    brand: string;
+    description: string;
+    basePrice: number;
+    categorySlug: string;
+    sizes: string[];
+    images: ListingImage[];
+    variants: Array<{ color: string; size: string | null; stock: number }>;
+  };
 };
 
 const popularBrands = [
@@ -33,11 +44,26 @@ function variantKey(color: string, size: string) {
   return JSON.stringify([color, size]);
 }
 
-export default function AddNewProduct({ categories }: AddNewProductProps) {
+export default function AddNewProduct({
+  categories,
+  initialProduct,
+}: AddNewProductProps) {
   const router = useRouter();
-  const [images, setImages] = useState<ListingImage[]>([]);
-  const [sizeInput, setSizeInput] = useState("");
-  const [stockByVariant, setStockByVariant] = useState<Record<string, string>>({});
+  const [images, setImages] = useState<ListingImage[]>(
+    () => initialProduct?.images ?? [],
+  );
+  const [sizeInput, setSizeInput] = useState(
+    () => initialProduct?.sizes.join(", ") ?? "",
+  );
+  const [stockByVariant, setStockByVariant] = useState<Record<string, string>>(
+    () =>
+      Object.fromEntries(
+        (initialProduct?.variants ?? []).map(({ color, size, stock }) => [
+          variantKey(color, size ?? "One size"),
+          String(stock),
+        ]),
+      ),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -83,24 +109,27 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
 
     setIsSubmitting(true);
     try {
-      const response = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.get("name"),
-          brand: formData.get("brand"),
-          description: formData.get("description"),
-          basePrice: Number(formData.get("basePrice")),
-          categorySlug: formData.get("categorySlug"),
-          sizes,
-          images: primaryFirstImages.map(({ url, color, isPrimary }) => ({
-            url,
-            color: color.trim(),
-            primary: isPrimary,
-          })),
-          variants,
-        }),
-      });
+      const response = await fetch(
+        initialProduct ? `/api/products/${initialProduct.id}` : "/api/products",
+        {
+          method: initialProduct ? "PATCH" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.get("name"),
+            brand: formData.get("brand"),
+            description: formData.get("description"),
+            basePrice: Number(formData.get("basePrice")),
+            categorySlug: formData.get("categorySlug"),
+            sizes,
+            images: primaryFirstImages.map(({ url, color, isPrimary }) => ({
+              url,
+              color: color.trim(),
+              primary: isPrimary,
+            })),
+            variants,
+          }),
+        },
+      );
 
       const result: unknown = await response.json();
       if (
@@ -116,7 +145,7 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
           "error" in result &&
           typeof result.error === "string"
             ? result.error
-            : "Could not publish the product. Check the details and try again.";
+            : `Could not ${initialProduct ? "update" : "publish"} the product. Check the details and try again.`;
         setError(message);
         return;
       }
@@ -138,20 +167,28 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
           Product management
         </p>
         <h1 className="mt-1 text-2xl font-bold text-[#262524] sm:text-3xl">
-          Create a product listing
+          {initialProduct ? "Edit product listing" : "Create a product listing"}
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-gray-600">
-          Add the details customers need to find and choose this item. Photos,
-          colors, sizes, and stock will be saved with the product.
+          {initialProduct
+            ? "Update the listing details, photos, colors, sizes, and stock for this product."
+            : "Add the details customers need to find and choose this item. Photos, colors, sizes, and stock will be saved with the product."}
         </p>
       </header>
 
       <form
         onSubmit={submitProduct}
         onReset={() => {
-          setImages([]);
-          setSizeInput("");
-          setStockByVariant({});
+          setImages(initialProduct?.images ?? []);
+          setSizeInput(initialProduct?.sizes.join(", ") ?? "");
+          setStockByVariant(
+            Object.fromEntries(
+              (initialProduct?.variants ?? []).map(({ color, size, stock }) => [
+                variantKey(color, size ?? "One size"),
+                String(stock),
+              ]),
+            ),
+          );
           setError("");
         }}
         className="space-y-6 rounded-xl border border-[#EFECE6] bg-white p-4 shadow-sm sm:p-6"
@@ -173,6 +210,7 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
               </span>
               <input
                 name="name"
+                defaultValue={initialProduct?.name}
                 required
                 minLength={2}
                 maxLength={100}
@@ -188,6 +226,7 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
               </span>
               <input
                 name="brand"
+                defaultValue={initialProduct?.brand}
                 required
                 maxLength={100}
                 list="popular-product-brands"
@@ -208,6 +247,7 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
               </span>
               <input
                 name="basePrice"
+                defaultValue={initialProduct?.basePrice}
                 type="number"
                 required
                 min="1"
@@ -225,7 +265,7 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
               <select
                 name="categorySlug"
                 required
-                defaultValue=""
+                defaultValue={initialProduct?.categorySlug ?? ""}
                 className="rounded-lg border border-[#EFECE6] bg-[#FAFAFA] px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#935F4C]/20"
               >
                 <option value="" disabled>
@@ -245,6 +285,7 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
               </span>
               <textarea
                 name="description"
+                defaultValue={initialProduct?.description}
                 required
                 minLength={10}
                 maxLength={5000}
@@ -355,7 +396,13 @@ export default function AddNewProduct({ categories }: AddNewProductProps) {
             disabled={isSubmitting || !hasCompleteImageColors || categories.length === 0}
             className="rounded-lg bg-[#935F4C] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#7A4E3E] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isSubmitting ? "Publishing..." : "Publish listing"}
+            {isSubmitting
+              ? initialProduct
+                ? "Saving changes..."
+                : "Publishing..."
+              : initialProduct
+                ? "Save changes"
+                : "Publish listing"}
           </button>
         </div>
       </form>

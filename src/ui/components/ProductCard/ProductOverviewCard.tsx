@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { Product } from "@/lib/products";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import AddToCartButton from "../Buttons/AddToCartButton";
 import ProductImageGallery from "./ProductImageGallery";
 
 type ProductOverviewCardProps = {
   product: Product;
+  isAdmin?: boolean;
 };
 
 export default function ProductOverviewCard({
   product,
+  isAdmin = false,
 }: ProductOverviewCardProps) {
   const [selectedSize, setSelectedSize] = useState(
     product.sizes[0] ?? "One size",
@@ -25,6 +29,16 @@ export default function ProductOverviewCard({
       />
 
       <div className="flex flex-col rounded-xl bg-white p-5 sm:p-6">
+        {isAdmin && (
+          <Link
+            href={`/product/${product.id}/edit`}
+            aria-label={`Edit ${product.name}`}
+            className="mb-3 inline-flex w-fit items-center gap-1 self-end rounded-md px-2 py-1 text-sm font-medium text-[#754B3D] hover:bg-[#F7F4F0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#935F4C]"
+          >
+            <PencilSquareIcon aria-hidden="true" className="h-4 w-4" />
+            Edit product
+          </Link>
+        )}
         <p className="text-sm font-medium uppercase tracking-wide text-[#935F4C]">
           {product.brand} · {product.categoryLabel}
         </p>

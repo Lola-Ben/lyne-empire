@@ -1,5 +1,6 @@
 import ProductCard from "@/ui/components/ProductCard/ProductCard";
 import { getCategoryProducts } from "@/lib/server/products";
+import { getProductAdminAccess } from "@/lib/server/product-admin";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,11 @@ type CategoryPageProps = {
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = await getCategoryProducts(slug);
+  const [category, adminAccess] = await Promise.all([
+    getCategoryProducts(slug),
+    getProductAdminAccess(),
+  ]);
+  const isAdmin = adminAccess.status === "authorized";
 
   if (!category) {
     notFound();
@@ -29,7 +34,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       {category.products.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
           {category.products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              isAdmin={isAdmin}
+            />
           ))}
         </div>
       ) : (

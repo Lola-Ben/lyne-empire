@@ -1,9 +1,13 @@
 
 import Link from "next/link";
 import { ArrowUpIcon } from "@heroicons/react/24/outline";
- 
 
-export default function AddProductButton() {
+import { getProductAdminAccess } from "@/lib/server/product-admin";
+
+export default async function AddProductButton() {
+  const access = await getProductAdminAccess();
+  if (access.status !== "authorized") return null;
+
   return (
     <Link
       href="/upload"

@@ -5,6 +5,7 @@ import {
   getProductById,
   getRelatedProducts,
 } from "@/lib/server/products";
+import { getProductAdminAccess } from "@/lib/server/product-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -20,11 +21,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const relatedProducts = await getRelatedProducts(product);
+  const [relatedProducts, adminAccess] = await Promise.all([
+    getRelatedProducts(product),
+    getProductAdminAccess(),
+  ]);
+  const isAdmin = adminAccess.status === "authorized";
 
   return (
     <main className="mx-auto w-full max-w-7xl space-y-10 p-4 sm:p-8">
-      <ProductOverviewCard product={product} />
+      <ProductOverviewCard product={product} isAdmin={isAdmin} />
 
       {relatedProducts.length > 0 && (
         <section aria-labelledby="related-products-heading">
@@ -44,6 +49,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               <ProductCard
                 key={relatedProduct.id}
                 product={relatedProduct}
+                isAdmin={isAdmin}
               />
             ))}
           </div>

@@ -1,10 +1,15 @@
 import ProductCard from "@/ui/components/ProductCard/ProductCard";
 import { getStorefrontProducts } from "@/lib/server/products";
+import { getProductAdminAccess } from "@/lib/server/product-admin";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const products = await getStorefrontProducts();
+  const [products, adminAccess] = await Promise.all([
+    getStorefrontProducts(),
+    getProductAdminAccess(),
+  ]);
+  const isAdmin = adminAccess.status === "authorized";
   const sections = products.reduce<Record<string, typeof products>>(
     (groupedProducts, product) => {
       const sectionName = product.sectionName;
@@ -29,7 +34,11 @@ export default async function Home() {
               <h3 className="text-lg font-semibold text-[#262524]">{sectionName}</h3>
               <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
                 {sectionProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isAdmin={isAdmin}
+                  />
                 ))}
               </div>
             </div>
